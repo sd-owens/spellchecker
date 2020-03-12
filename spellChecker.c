@@ -59,6 +59,7 @@ void loadDictionary(FILE* file, HashMap* map)
     while(word)
     {
         hashMapPut( map, word, 0);
+        free(word);
         word = nextWord(file);
     }
 }
