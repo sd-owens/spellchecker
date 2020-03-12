@@ -95,6 +95,7 @@ void hashMapCleanUp(HashMap* map)
             hashLinkDelete(prev);
         }
     }
+    free(map->table);
 }
 
 /**
@@ -162,22 +163,6 @@ int* hashMapGet(HashMap* map, const char* key)
  */
 void resizeTable(HashMap* map, int capacity)
 {
-//    HashMap * newMap = hashMapNew(capacity);
-//
-//    for (int i = 0; i < map->capacity; i++)
-//    {
-//        HashLink *curr = map->table[i];
-//
-//        while(curr != NULL)
-//        {
-//            hashMapPut(newMap, curr->key, curr->value);
-//            curr = curr->next;
-//        }
-//    }
-//    hashMapDelete(map);
-//    *map = *newMap;
-//    newMap = NULL;
-
     HashLink ** newTable = malloc(sizeof(HashLink*) * capacity);
 
     for (int i = 0; i < capacity; i++) {
@@ -196,15 +181,14 @@ void resizeTable(HashMap* map, int capacity)
             newTable[index] = hashLinkNew(curr->key, curr->value, newTable[index]);
 
             curr = curr->next;
-            free(prev);
+            hashLinkDelete(prev);
             prev = curr;
         }
     }
 
-    HashLink ** temp = map->table;
+    free(map->table);
     map->table = newTable;
     map->capacity = capacity;
-    free(temp);
 
 }
 
