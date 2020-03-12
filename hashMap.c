@@ -267,11 +267,11 @@ void hashMapRemove(HashMap* map, const char* key)
                 map->table[index] = curr->next;
             }
             prev->next = curr->next;
+            prev = curr;
             curr = curr->next;
             hashLinkDelete(prev);
             map->size--;
         } else {
-
             prev = curr;
             curr = curr->next;
         }
@@ -338,7 +338,7 @@ int hashMapEmptyBuckets(HashMap* map)
 
     for(int i = 0; i < map->capacity; i++)
     {
-        if(map->table[i] != NULL)
+        if(map->table[i] == NULL)
         {
             counter += 1;
         }
