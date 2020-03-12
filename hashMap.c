@@ -134,13 +134,13 @@ void hashMapDelete(HashMap* map)
  */
 int* hashMapGet(HashMap* map, const char* key)
 {
-    int index = HASH_FUNCTION(key);
+    int index = HASH_FUNCTION(key) % map->capacity;
 
     HashLink * curr = map->table[index];
 
     while (curr != NULL)
     {
-        if(curr->key == key)
+        if(strcmp(curr->key, key) == 0)
         {
             return &(curr->value);
         }
@@ -162,43 +162,50 @@ int* hashMapGet(HashMap* map, const char* key)
  */
 void resizeTable(HashMap* map, int capacity)
 {
+//    HashMap * newMap = hashMapNew(capacity);
+//
+//    for (int i = 0; i < map->capacity; i++)
+//    {
+//        HashLink *curr = map->table[i];
+//
+//        while(curr != NULL)
+//        {
+//            hashMapPut(newMap, curr->key, curr->value);
+//            curr = curr->next;
+//        }
+//    }
+//    hashMapDelete(map);
+//    *map = *newMap;
+//    newMap = NULL;
 
-    HashLink ** newTable = malloc(sizeof(HashLink) * capacity);
+    HashLink ** newTable = malloc(sizeof(HashLink*) * capacity);
 
-    HashLink * curr, ** oldTable;
+    for (int i = 0; i < capacity; i++) {
+        newTable[i] = NULL;
+    }
 
-    oldTable = map->table;
-    map->table = newTable;
+    for (int j = 0; j < map->capacity; j++) {
 
-    for (int i = 0; i < map->capacity; i++)
-    {
-        curr = oldTable[i];
+        HashLink *curr = map->table[j];
+        HashLink *prev = curr;
 
-        while (curr != NULL)
-        {
-            hashMapPut(map, curr->key, curr->value);
+        while (curr != NULL) {
+
+            int index = HASH_FUNCTION(curr->key) % capacity;
+
+            newTable[index] = hashLinkNew(curr->key, curr->value, newTable[index]);
+
             curr = curr->next;
+            free(prev);
+            prev = curr;
         }
     }
 
-    //free memory for oldTable after rehashing all old links into new larger capacity table.
-    for(int j = 0; j < map->capacity; j++)
-    {
-        HashLink * temp = map->table[j];
-        HashLink * prev = temp;
-
-        while(temp != NULL)
-        {
-            prev = temp;
-            curr = temp->next;
-            hashLinkDelete(prev);
-        }
-    }
-
-    free(oldTable);
-    //update capacity of map following rehash of all old links.
+    HashLink ** temp = map->table;
+    map->table = newTable;
     map->capacity = capacity;
-    
+    free(temp);
+
 }
 
 /**
@@ -216,32 +223,24 @@ void resizeTable(HashMap* map, int capacity)
  */
 void hashMapPut(HashMap* map, const char* key, int value)
 {
-    int index = HASH_FUNCTION(key);
+    if(hashMapTableLoad(map) >= MAX_TABLE_LOAD) {
+        resizeTable(map, map->capacity * 2);
+    }
+
+    int index = HASH_FUNCTION(key) % map->capacity;
 
     HashLink * curr = map->table[index];
 
-    int * val = hashMapGet(map, key);
+    int * keyValue = hashMapGet(map, key);
 
-    if(val != NULL)
+    if(keyValue != NULL)
     {
-        *val = value;
+        *keyValue = value;
         return;
     }
-
-    HashLink *newLink = malloc(sizeof(HashLink));
-    newLink->key = key;
-    newLink->value = value;
-    newLink->next = NULL;
+    map->table[index] = hashLinkNew(key, value, curr);
     map->size++;
 
-    while (curr != NULL)
-    {
-        if(curr->next == NULL)
-        {
-            curr->next = newLink;
-        }
-        curr = curr->next;
-    }
 }
 
 /**
@@ -253,19 +252,31 @@ void hashMapPut(HashMap* map, const char* key, int value)
  */
 void hashMapRemove(HashMap* map, const char* key)
 {
-    int index = HASH_FUNCTION(key);
+    int index = HASH_FUNCTION(key) % map->capacity;
 
     HashLink *curr = map->table[index];
+    HashLink *prev = curr;
 
-    while (curr != NULL)
-    {
-        if (curr->key == key)
+    while (curr != NULL) {
+
+        if (strcmp(curr->key, key) == 0)
         {
-            hashLinkDelete(curr);
-        }
-        curr = curr->next;
-    }
+            // checks if deleting first item in the linked list.
+            if(prev == curr)
+            {
+                map->table[index] = curr->next;
+            }
+            prev->next = curr->next;
+            curr = curr->next;
+            hashLinkDelete(prev);
+            map->size--;
+        } else {
 
+            prev = curr;
+            curr = curr->next;
+        }
+
+    }
 }
 
 /**
@@ -281,11 +292,17 @@ void hashMapRemove(HashMap* map, const char* key)
 int hashMapContainsKey(HashMap* map, const char* key)
 {
     int containsKey = 0;
-    int index = HASH_FUNCTION(key);
+    int index = HASH_FUNCTION(key) % map->capacity;
 
-    if(map->table[index]->key == key)
+    HashLink *curr = map->table[index];
+
+    while(curr != NULL)
     {
-        containsKey = 1;
+        if(strcmp(curr->key, key) == 0)
+        {
+            containsKey = 1;
+        }
+        curr = curr->next;
     }
     return containsKey;
 }
@@ -349,15 +366,13 @@ float hashMapTableLoad(HashMap* map)
  */
 void hashMapPrint(HashMap* map)
 {
-    printf("Hash Table Contains: \n");
-
     for (int i = 0; i < map->capacity; i++)
     {
         HashLink * curr = map->table[i];
 
         while(curr != NULL)
         {
-            printf("Bucket %d - Key: %s Value: %d \n", i, curr->key, curr->value);
+            printf("\nBucket %d - Key: %s Value: %d", i, curr->key, curr->value);
 
             curr = curr->next;
         }
