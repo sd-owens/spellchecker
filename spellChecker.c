@@ -263,7 +263,7 @@ int main(int argc, const char** argv)
 {
     HashMap* map = hashMapNew(1000);
 
-    FILE* file = fopen("../dictionary.txt", "r");
+    FILE* file = fopen("dictionary.txt", "r");
     clock_t timer = clock();
     loadDictionary(file, map);
     timer = clock() - timer;
