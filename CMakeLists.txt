@@ -6,8 +6,6 @@ set(CMAKE_C_STANDARD 11)
 include_directories(.)
 
 add_executable(hashmap_spellcheck
-        CuTest.h
-        CuTest.c
-        tests.c
+        spellChecker.c
         hashMap.c
         hashMap.h)

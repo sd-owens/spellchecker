@@ -29,7 +29,5 @@ int main() {
     printf("\nEmpty Buckets: %d", hashMapEmptyBuckets(map));
     hashMapDelete(map);
 
-
-
     return 0;
 }
